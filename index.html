@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Votação - Grêmio Estudantil</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Animação suave para as barras do telão */
+    .bar-transition { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col justify-between">
+
+  <header class="bg-blue-900 text-white p-4 shadow-md text-center">
+    <div class="flex justify-center items-center gap-3">
+      <span class="text-4xl">🔰</span>
+      <div>
+        <h1 id="header-titulo" class="text-2xl font-bold tracking-wide">ELEIÇÃO DO GRÊMIO ESTUDANTIL</h1>
+        <p class="text-sm text-blue-200">Urna Eletrônica Escolar</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
+    
+    <div id="tela-votacao" class="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+      <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Vote em uma das Chapas Abaixo:</h2>
+      
+      <div id="lista-chapas-urna" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        </div>
+
+      <div id="area-confirmacao" class="hidden border-t-2 border-dashed pt-6 text-center">
+        <p class="text-lg text-gray-600 mb-4">Você selecionou: <span id="chapa-selecionada-nome" class="font-bold text-blue-900"></span></p>
+        <button onclick="confirmarVoto()" id="btn-confirmar" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl text-xl shadow-lg transform active:scale-95 transition">
+          CONFIRMAR VOTO
+        </button>
+      </div>
+    </div>
+
+    <div id="tela-sucesso" class="hidden w-full max-w-md bg-green-50 rounded-2xl shadow-xl p-12 text-center border-2 border-green-500 animate-bounce-short">
+      <span class="text-6xl">🎉</span>
+      <h2 class="text-3xl font-bold text-green-700 mt-4">VOTO REGISTRADO!</h2>
+      <p class="text-gray-600 mt-2 text-lg">Seu voto foi computado com sucesso.</p>
+      <p class="text-xs text-gray-400 mt-6">Aguarde o próximo aluno...</p>
+    </div>
+
+    <div id="tela-telao" class="hidden w-full max-w-4xl bg-gray-900 text-white rounded-2xl shadow-2xl p-8">
+      <h2 class="text-3xl font-black text-center text-yellow-400 tracking-wider mb-8">📊 RESULTADOS EM TEMPO REAL</h2>
+      
+      <div id="ranking-barras" class="space-y-6">
+        </div>
+
+      <div class="mt-8 pt-6 border-t border-gray-700 flex justify-between items-center text-xl font-bold text-gray-400">
+        <span>TOTAL DE VOTOS:</span>
+        <span id="telao-total" class="text-3xl text-white">0</span>
+      </div>
+    </div>
+
+    <div id="tela-admin" class="hidden w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+      <h2 class="text-2xl font-bold text-red-700 mb-6 border-b pb-2">⚙️ Painel de Controle do Mesário</h2>
+      
+      <div class="mb-6">
+        <label class="block text-gray-700 font-bold mb-2">Nome da Eleição:</label>
+        <div class="flex gap-2">
+          <input type="text" id="input-nome-eleicao" class="border p-2 rounded w-full" value="ELEIÇÃO DO GRÊMIO ESTUDANTIL">
+          <button onclick="salvarNomeEleicao()" class="bg-blue-600 text-white px-4 rounded font-bold">Salvar</button>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <h3 class="font-bold text-gray-800 mb-2">Chapas Cadastradas:</h3>
+        <div id="admin-lista-chapas" class="space-y-2 mb-4"></div>
+        
+        <div class="bg-gray-50 p-4 rounded-xl border flex flex-col md:flex-row gap-2 items-end">
+          <div class="flex-grow">
+            <label class="block text-xs font-bold text-gray-600">Nome da Nova Chapa:</label>
+            <input type="text" id="nova-chapa-nome" class="w-full border p-2 rounded mt-1" placeholder="Ex: Chapa 1 - Voz Ativa">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600">Emoji/Ícone da Foto:</label>
+            <input type="text" id="nova-chapa-foto" class="w-full border p-2 rounded mt-1 text-center" placeholder="Ex: 🔥">
+          </div>
+          <button onclick="adicionarChapa()" class="bg-green-600 text-white font-bold p-2 px-4 rounded w-full md:w-auto">Adicionar</button>
+        </div>
+      </div>
+
+      <div class="border-t pt-6 flex flex-wrap gap-4 justify-between">
+        <button onclick="zerarVotos()" class="bg-red-600 hover:bg-red-700 text-white font-bold p-3 rounded-xl shadow">
+          ⚠️ Zerar Todos os Votos (Zerésima)
+        </button>
+        <button onclick="exportarDados()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold p-3 rounded-xl shadow">
+          📥 Exportar Relatório (Console Log)
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="bg-gray-800 p-3 text-center flex justify-center gap-4 text-xs">
+    <button onclick="mudarTela('urna')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-500">Urna (Alunos)</button>
+    <button onclick="mudarTela('telao')" class="bg-purple-600 text-white px-4 py-2 rounded font-bold hover:bg-purple-500">Telão (Projetor)</button>
+    <button onclick="mudarTela('admin')" class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-500">Admin (Mesário)</button>
+  </footer>
+
+  <script>
+    // Dados iniciais padrões caso não existam no LocalStorage
+    const chapasIniciais = [
+      { id: 1, nome: "Chapa 1 - Conexão Estudantil", foto: "🚀", votos: 0 },
+      { id: 2, nome: "Chapa 2 - Voz Ativa", foto: "📢", votos: 0 },
+      { id: 3, nome: "Chapa 3 - Renovação Já", foto: "⚡", votos: 0 }
+    ];
+
+    // Carrega do LocalStorage ou inicia com os padrões acima
+    let dadosEleicao = {
+      titulo: localStorage.getItem('titulo_eleicao') || "ELEIÇÃO DO GRÊMIO ESTUDANTIL",
+      chapas: JSON.parse(localStorage.getItem('chapas_eleicao')) || chapasIniciais
+    };
+
+    let idChapaSelecionada = null;
+
+    // Função para salvar as alterações no navegador
+    function salvarDados() {
+      localStorage.setItem('titulo_eleicao', dadosEleicao.titulo);
+      localStorage.setItem('chapas_eleicao', JSON.stringify(dadosEleicao.chapas));
+      renderizarTudo();
+    }
+
+    // Gerenciador de navegação de telas
+    function mudarTela(tela) {
+      document.getElementById('tela-votacao').classList.add('hidden');
+      document.getElementById('tela-sucesso').classList.add('hidden');
+      document.getElementById('tela-telao').classList.add('hidden');
+      document.getElementById('tela-admin').classList.add('hidden');
+
+      if (tela === 'urna') document.getElementById('tela-votacao').classList.remove('hidden');
+      if (tela === 'telao') document.getElementById('tela-telao').classList.remove('hidden');
+      if (tela === 'admin') document.getElementById('tela-admin').classList.remove('hidden');
+    }
+
+    // Renderiza os componentes de acordo com o estado dos dados
+    function renderizarTudo() {
+      document.getElementById('header-titulo').innerText = dadosEleicao.titulo;
+      document.getElementById('input-nome-eleicao').value = dadosEleicao.titulo;
+
+      const totalVotos = dadosEleicao.chapas.reduce((acc, c) => acc + c.votos, 0);
+
+      // --- RENDERIZAR URNA ---
+      const listaUrna = document.getElementById('lista-chapas-urna');
+      listaUrna.innerHTML = '';
+      dadosEleicao.chapas.forEach(chapa => {
+        listaUrna.innerHTML += `
+          <button onclick="selecionarChapa(${chapa.id})" class="flex items-center gap-4 p-4 border-2 rounded-xl text-left transition hover:bg-blue-50 active:scale-95 ${idChapaSelecionada === chapa.id ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-400' : 'border-gray-200'}">
+            <span class="text-4xl p-2 bg-gray-100 rounded-lg">${chapa.foto}</span>
+            <span class="text-lg font-bold text-gray-700">${chapa.nome}</span>
+          </button>
+        `;
+      });
+
+      // --- RENDERIZAR TELÃO (Com ordenação de Ranking) ---
+      const listaTelao = document.getElementById('ranking-barras');
+      document.getElementById('telao-total').innerText = totalVotos;
+      listaTelao.innerHTML = '';
+      
+      // Cria uma cópia para ordenar por votos sem quebrar a ordem original
+      const chapasOrdenadas = [...dadosEleicao.chapas].sort((a,b) => b.votos - a.votos);
+      
+      chapasOrdenadas.forEach(chapa => {
+        const porc = totalVotos > 0 ? Math.round((chapa.votos / totalVotos) * 100) : 0;
+        listaTelao.innerHTML += `
+          <div class="space-y-1">
+            <div class="flex justify-between font-medium text-lg">
+              <span class="flex items-center gap-2"><span>${chapa.foto}</span> <b>${chapa.nome}</b></span>
+              <span class="text-yellow-400 font-bold">${porc}% <span class="text-sm text-gray-400">(${chapa.votos} votos)</span></span>
+            </div>
+            <div class="w-full bg-gray-800 h-8 rounded-full overflow-hidden p-1 border border-gray-700">
+              <div class="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full bar-transition" style="width: ${porc}%"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      // --- RENDERIZAR PAINEL ADMIN ---
+      const listaAdmin = document.getElementById('admin-lista-chapas');
+      listaAdmin.innerHTML = '';
+      dadosEleicao.chapas.forEach(chapa => {
+        listaAdmin.innerHTML += `
+          <div class="flex justify-between items-center bg-gray-50 p-2 rounded border">
+            <span>${chapa.foto} <b>${chapa.nome}</b> (${chapa.votos} votos)</span>
+            <button onclick="removerChapa(${chapa.id})" class="text-red-600 hover:text-red-800 font-bold text-sm">Remover</button>
+          </div>
+        `;
+      });
+    }
+
+    // Ações de Votação
+    function selecionarChapa(id) {
+      idChapaSelecionada = id;
+      const chapa = dadosEleicao.chapas.find(c => c.id === id);
+      document.getElementById('chapa-selecionada-nome').innerText = chapa.nome;
+      document.getElementById('area-confirmacao').classList.remove('hidden');
+      renderizarTudo();
+    }
+
+    function confirmarVoto() {
+      if (idChapaSelecionada === null) return;
+      
+      // Desabilita botão contra duplo clique
+      document.getElementById('btn-confirmar').disabled = true;
+
+      // Adiciona o voto
+      const chapa = dadosEleicao.chapas.find(c => c.id === idChapaSelecionada);
+      chapa.votos += 1;
+
+      // Troca de Tela para Sucesso
+      document.getElementById('tela-votacao').classList.add('hidden');
+      document.getElementById('tela-sucesso').classList.remove('hidden');
+
+      // Toca um bipe simulado (som clássico de urna) se o navegador permitir
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); // Frequência do Apito
+        oscillator.connect(audioCtx.destination);
+        oscillator.start();
+        setTimeout(() => oscillator.stop(), 300);
+      } catch(e) { console.log("Áudio não pôde ser reproduzido ainda."); }
+
+      // Salva e Reseta a Urna para o próximo aluno em 3 segundos
+      setTimeout(() => {
+        idChapaSelecionada = null;
+        document.getElementById('area-confirmacao').classList.add('hidden');
+        document.getElementById('btn-confirmar').disabled = false;
+        
+        salvarDados(); // Isso já atualiza o telão em segundo plano
+        
+        mudarTela('urna');
+      }, 3000);
+    }
+
+    // Funções do Administrador
+    function salvarNomeEleicao() {
+      dadosEleicao.titulo = document.getElementById('input-nome-eleicao').value;
+      salvarDados();
+    }
+
+    function adicionarChapa() {
+      const nome = document.getElementById('nova-chapa-nome').value;
+      const foto = document.getElementById('nova-chapa-foto').value || "📦";
+      if (!nome) return alert("Digite o nome da chapa!");
+
+      const novoId = dadosEleicao.chapas.length > 0 ? Math.max(...dadosEleicao.chapas.map(c => c.id)) + 1 : 1;
+      dadosEleicao.chapas.push({ id: novoId, nome: nome, foto: foto, votos: 0 });
+      
+      document.getElementById('nova-chapa-nome').value = '';
+      document.getElementById('nova-chapa-foto').value = '';
+      salvarDados();
+    }
+
+    function removerChapa(id) {
+      if(confirm("Tem certeza que quer remover esta chapa?")) {
+        dadosEleicao.chapas = dadosEleicao.chapas.filter(c => c.id !== id);
+        salvarDados();
+      }
+    }
+
+    function zerarVotos() {
+      if(confirm("ATENÇÃO: Isso vai apagar todos os votos registrados! Deseja continuar (Zerésima)?")) {
+        dadosEleicao.chapas.forEach(c => c.votos = 0);
+        salvarDados();
+        alert("Urna zerada com sucesso!");
+      }
+    }
+
+    function exportarDados() {
+      console.log("--- RELATÓRIO DA ELEIÇÃO ---");
+      console.log("Título:", dadosEleicao.titulo);
+      console.table(dadosEleicao.chapas);
+      alert("Relatório gerado no console do desenvolvedor (Aperte F12 para ver).");
+    }
+
+    // Inicialização do sistema
+    renderizarTudo();
+  </script>
+</body>
+  </html>
+  
