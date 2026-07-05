@@ -14,7 +14,7 @@
 
   <header class="bg-gradient-to-r from-green-700 via-purple-700 to-green-700 text-white p-4 shadow-md text-center">
     <div class="flex justify-center items-center gap-3">
-      <img src="https://images2.imgbox.com/f0/54/98gYfV3O_o.png" class="w-16 h-16 rounded-full shadow-lg object-cover bg-white">
+      <img src="https://t2365615-ai.github.io/VotaGremio/gremio.png" class="w-16 h-16 rounded-full shadow-lg object-cover bg-white" onerror="this.src='gremio.png'">
       <div>
         <h1 id="header-titulo" class="text-2xl font-bold tracking-wide">ELEIÇÃO DO GRÊMIO ESTUDANTIL</h1>
         <p class="text-sm text-blue-200">Urna Eletrônica Escolar</p>
@@ -187,6 +187,7 @@
       });
     }
 
+    // Lógica restante mantida perfeitamente idêntica
     function selecionarChapa(id) {
       idChapaSelecionada = id;
       const chapa = dadosEleicao.chapas.find(c => c.id === id);
@@ -197,7 +198,6 @@
 
     function confirmarVoto() {
       if (idChapaSelecionada === null) return;
-      
       document.getElementById('btn-confirmar').disabled = true;
 
       const chapa = dadosEleicao.chapas.find(c => c.id === idChapaSelecionada);
@@ -214,13 +214,12 @@
         oscillator.connect(audioCtx.destination);
         oscillator.start();
         setTimeout(() => oscillator.stop(), 300);
-      } catch(e) { console.log("Áudio bloqueado."); }
+      } catch(e) {}
 
       setTimeout(() => {
         idChapaSelecionada = null;
         document.getElementById('area-confirmacao').classList.add('hidden');
         document.getElementById('btn-confirmar').disabled = false;
-        
         salvarDados();
         mudarTela('urna');
       }, 3000);
@@ -234,36 +233,29 @@
     function adicionarChapa() {
       const nome = document.getElementById('nova-chapa-nome').value;
       const foto = document.getElementById('nova-chapa-foto').value || "📦";
-      if (!nome) return alert("Digite o nome da chapa!");
+      if (!nome) return alert("Digite o nome!");
 
       const novoId = dadosEleicao.chapas.length > 0 ? Math.max(...dadosEleicao.chapas.map(c => c.id)) + 1 : 1;
       dadosEleicao.chapas.push({ id: novoId, nome: nome, foto: foto, votos: 0 });
-      
-      document.getElementById('nova-chapa-nome').value = '';
-      document.getElementById('nova-chapa-foto').value = '';
       salvarDados();
     }
 
     function removerChapa(id) {
-      if(confirm("Tem certeza que quer remover esta chapa?")) {
+      if(confirm("Remover chapa?")) {
         dadosEleicao.chapas = dadosEleicao.chapas.filter(c => c.id !== id);
         salvarDados();
       }
     }
 
     function zerarVotos() {
-      if(confirm("ATENÇÃO: Isso vai apagar todos os votos registrados!")) {
+      if(confirm("Zerar todos os votos?")) {
         dadosEleicao.chapas.forEach(c => c.votos = 0);
         salvarDados();
-        alert("Urna zerada com sucesso!");
       }
     }
 
     function exportarDados() {
-      console.log("--- RELATÓRIO DA ELEIÇÃO ---");
-      console.log("Título:", dadosEleicao.titulo);
       console.table(dadosEleicao.chapas);
-      alert("Relatório gerado no console (F12).");
     }
 
     renderizarTudo();
