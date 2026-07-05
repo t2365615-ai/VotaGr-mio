@@ -14,7 +14,7 @@
 
   <header class="bg-gradient-to-r from-green-700 via-purple-700 to-green-700 text-white p-4 shadow-md text-center">
     <div class="flex justify-center items-center gap-3">
-      <img src="gremio.png" class="w-16 h-16 rounded-full shadow-lg">
+      <img src="https://images2.imgbox.com/f0/54/98gYfV3O_o.png" class="w-16 h-16 rounded-full shadow-lg object-cover bg-white">
       <div>
         <h1 id="header-titulo" class="text-2xl font-bold tracking-wide">ELEIÇÃO DO GRÊMIO ESTUDANTIL</h1>
         <p class="text-sm text-blue-200">Urna Eletrônica Escolar</p>
@@ -104,14 +104,12 @@
   </footer>
 
   <script>
-    // Dados iniciais padrões caso não existam no LocalStorage
     const chapasIniciais = [
       { id: 1, nome: "Chapa 1 - Conexão Estudantil", foto: "🚀", votos: 0 },
       { id: 2, nome: "Chapa 2 - Voz Ativa", foto: "📢", votos: 0 },
       { id: 3, nome: "Chapa 3 - Renovação Já", foto: "⚡", votos: 0 }
     ];
 
-    // Carrega do LocalStorage ou inicia com os padrões acima
     let dadosEleicao = {
       titulo: localStorage.getItem('titulo_eleicao') || "ELEIÇÃO DO GRÊMIO ESTUDANTIL",
       chapas: JSON.parse(localStorage.getItem('chapas_eleicao')) || chapasIniciais
@@ -119,14 +117,12 @@
 
     let idChapaSelecionada = null;
 
-    // Função para salvar as alterações no navegador
     function salvarDados() {
       localStorage.setItem('titulo_eleicao', dadosEleicao.titulo);
       localStorage.setItem('chapas_eleicao', JSON.stringify(dadosEleicao.chapas));
       renderizarTudo();
     }
 
-    // Gerenciador de navegação de telas
     function mudarTela(tela) {
       document.getElementById('tela-votacao').classList.add('hidden');
       document.getElementById('tela-sucesso').classList.add('hidden');
@@ -138,7 +134,6 @@
       if (tela === 'admin') document.getElementById('tela-admin').classList.remove('hidden');
     }
 
-    // Renderiza os componentes de acordo com o estado dos dados
     function renderizarTudo() {
       document.getElementById('header-titulo').innerText = dadosEleicao.titulo;
       document.getElementById('input-nome-eleicao').value = dadosEleicao.titulo;
@@ -157,12 +152,11 @@
         `;
       });
 
-      // --- RENDERIZAR TELÃO (Com ordenação de Ranking) ---
+      // --- RENDERIZAR TELÃO ---
       const listaTelao = document.getElementById('ranking-barras');
       document.getElementById('telao-total').innerText = totalVotos;
       listaTelao.innerHTML = '';
       
-      // Cria uma cópia para ordenar por votos sem quebrar a ordem original
       const chapasOrdenadas = [...dadosEleicao.chapas].sort((a,b) => b.votos - a.votos);
       
       chapasOrdenadas.forEach(chapa => {
@@ -193,7 +187,6 @@
       });
     }
 
-    // Ações de Votação
     function selecionarChapa(id) {
       idChapaSelecionada = id;
       const chapa = dadosEleicao.chapas.find(c => c.id === id);
@@ -205,41 +198,34 @@
     function confirmarVoto() {
       if (idChapaSelecionada === null) return;
       
-      // Desabilita botão contra duplo clique
       document.getElementById('btn-confirmar').disabled = true;
 
-      // Adiciona o voto
       const chapa = dadosEleicao.chapas.find(c => c.id === idChapaSelecionada);
       chapa.votos += 1;
 
-      // Troca de Tela para Sucesso
       document.getElementById('tela-votacao').classList.add('hidden');
       document.getElementById('tela-sucesso').classList.remove('hidden');
 
-      // Toca um bipe simulado (som clássico de urna) se o navegador permitir
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioCtx.createOscillator();
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); // Frequência do Apito
+        oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime);
         oscillator.connect(audioCtx.destination);
         oscillator.start();
         setTimeout(() => oscillator.stop(), 300);
-      } catch(e) { console.log("Áudio não pôde ser reproduzido ainda."); }
+      } catch(e) { console.log("Áudio bloqueado."); }
 
-      // Salva e Reseta a Urna para o próximo aluno em 3 segundos
       setTimeout(() => {
         idChapaSelecionada = null;
         document.getElementById('area-confirmacao').classList.add('hidden');
         document.getElementById('btn-confirmar').disabled = false;
         
-        salvarDados(); // Isso já atualiza o telão em segundo plano
-        
+        salvarDados();
         mudarTela('urna');
       }, 3000);
     }
 
-    // Funções do Administrador
     function salvarNomeEleicao() {
       dadosEleicao.titulo = document.getElementById('input-nome-eleicao').value;
       salvarDados();
@@ -265,7 +251,21 @@
       }
     }
 
-    // Inicialização do sistema
+    function zerarVotos() {
+      if(confirm("ATENÇÃO: Isso vai apagar todos os votos registrados!")) {
+        dadosEleicao.chapas.forEach(c => c.votos = 0);
+        salvarDados();
+        alert("Urna zerada com sucesso!");
+      }
+    }
+
+    function exportarDados() {
+      console.log("--- RELATÓRIO DA ELEIÇÃO ---");
+      console.log("Título:", dadosEleicao.titulo);
+      console.table(dadosEleicao.chapas);
+      alert("Relatório gerado no console (F12).");
+    }
+
     renderizarTudo();
   </script>
 </body>
