@@ -99,25 +99,27 @@
   </footer>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-analytics.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-database.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyCcCP0Uv3lnRR2Q28RQsc3vavrwKHiLsYU",
-      authDomain: "votagremio.firebaseapp.com",
-      databaseURL: "https://votagremio-default-rtdb.firebaseio.com",
-      projectId: "votagremio",
-      storageBucket: "votagremio.firebasestorage.app",
-      messagingSenderId: "155843890351",
-      appId: "1:155843890351:web:105056a2ebf0e76e55d85a",
-      measurementId: "G-NW16131Q12"
+      apiKey: "AIzaSyCJmIe2AirizuRad2ixm-kqKmUTh9nf5Rs",
+      authDomain: "votacaogremio-91819.firebaseapp.com",
+      databaseURL: "https://votacaogremio-91819-default-rtdb.firebaseio.com",
+      projectId: "votacaogremio-91819",
+      storageBucket: "votacaogremio-91819.firebasestorage.app",
+      messagingSenderId: "252773244602",
+      appId: "1:252773244602:web:d72904880794b3e96e6c83",
+      measurementId: "G-W2RH88XBWY"
     };
 
     const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
     const db = getDatabase(app);
     const eleicaoRef = ref(db, 'eleicao');
 
-    // Estrutura padrão inicial com 2 Chapas
+    // Estrutura inicial padrão com 2 Chapas
     let dadosEleicao = {
       titulo: "ELEIÇÃO DO GRÊMIO ESTUDANTIL - CETI JOSÉ MARQUES",
       chapas: [
@@ -128,13 +130,12 @@
 
     let idChapaSelecionada = null;
 
-    // Escutador em tempo real
+    // Sincronização em tempo real
     onValue(eleicaoRef, (snapshot) => {
       const data = snapshot.val();
       if (data && data.chapas) {
         dadosEleicao = data;
       } else {
-        // Inicializa o banco com 2 chapas se estiver vazio
         set(eleicaoRef, dadosEleicao);
       }
       renderizarTudo();
@@ -236,7 +237,6 @@
         document.getElementById('tela-urna').classList.add('hidden');
         document.getElementById('tela-sucesso').classList.remove('hidden');
         
-        // Sinal Sonoro do Fim do Voto
         try {
           const ctx = new (window.AudioContext || window.webkitAudioContext)();
           const osc = ctx.createOscillator();
@@ -255,7 +255,6 @@
       });
     };
 
-    // Função para Ler a Foto Escolhida da Galeria do Dispositivo
     window.adicionarChapa = function() {
       const nome = document.getElementById('nova-chapa-nome').value;
       const fileInput = document.getElementById('nova-chapa-file');
@@ -275,18 +274,17 @@
         set(eleicaoRef, dadosEleicao).then(() => {
           document.getElementById('nova-chapa-nome').value = '';
           fileInput.value = '';
-          alert("Chapa e foto cadastradas com sucesso!");
+          alert("Chapa cadastrada com sucesso!");
         });
       };
 
       if (fileInput.files && fileInput.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          salvarChapaComFoto(e.target.result); // Converte a foto em Base64
+          salvarChapaComFoto(e.target.result);
         };
         reader.readAsDataURL(fileInput.files[0]);
       } else {
-        // Foto Padrão caso não envie foto da galeria
         salvarChapaComFoto("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop");
       }
     };
