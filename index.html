@@ -6,8 +6,15 @@
   <title>Sistema de Votação - Grêmio Estudantil</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Animação suave para as barras do telão */
     .bar-transition { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    /* Efeito de carregamento para fotos */
+    .img-placeholder { background: #e5e7eb; position: relative; overflow: hidden; }
+    .img-placeholder::after {
+      content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
   </style>
 </head>
 <body class="bg-gradient-to-br from-green-50 via-white to-purple-100 font-sans min-h-screen flex flex-col justify-between">
@@ -16,100 +23,89 @@
     <div class="flex justify-center items-center gap-3">
       <img src="https://t2365615-ai.github.io/VotaGremio/gremio.png" class="w-16 h-16 rounded-full shadow-lg object-cover bg-white" onerror="this.src='gremio.png'">
       <div>
-        <h1 id="header-titulo" class="text-2xl font-bold tracking-wide">A CARREGAR ELEIÇÃO...</h1>
-        <p class="text-sm text-blue-200">Urna Eletrônica Escolar Online</p>
+        <h1 id="header-titulo" class="text-2xl font-bold tracking-wide">CONECTANDO AO FIREBASE...</h1>
+        <p class="text-sm text-blue-200">Urna Eletrônica com Foto</p>
       </div>
     </div>
   </header>
 
   <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
     
-    <div id="tela-votacao" class="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
-      <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Vote em uma das Chapas Abaixo:</h2>
+    <div id="tela-votacao" class="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+      <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">Vote em uma das Chapas Abaixo:</h2>
       
-      <div id="lista-chapas-urna" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <p class="text-center text-gray-500 col-span-full">A ligar ao banco de dados...</p>
-      </div>
-
-      <div id="area-confirmacao" class="hidden border-t-2 border-dashed pt-6 text-center">
-        <p class="text-lg text-gray-600 mb-4">Você selecionou: <span id="chapa-selecionada-nome" class="font-bold text-blue-900"></span></p>
-        <button onclick="confirmarVoto()" id="btn-confirmar" class="w-full bg-purple-700 hover:bg-purple-800 text-white font-bold py-4 rounded-xl text-xl shadow-lg transform active:scale-95 transition">
-          CONFIRMAR VOTO
-        </button>
-      </div>
-    </div>
-
-    <div id="tela-sucesso" class="hidden w-full max-w-md bg-green-50 rounded-2xl shadow-xl p-12 text-center border-2 border-green-500 animate-bounce-short">
-      <span class="text-6xl">🎉</span>
-      <h2 class="text-3xl font-bold text-green-700 mt-4">VOTO REGISTRADO!</h2>
-      <p class="text-gray-600 mt-2 text-lg">Seu voto foi computado com sucesso.</p>
-      <p class="text-xs text-gray-400 mt-6">Aguarde o próximo aluno...</p>
-    </div>
-
-    <div id="tela-telao" class="hidden w-full max-w-4xl bg-gray-900 text-white rounded-2xl shadow-2xl p-8">
-      <h2 class="text-3xl font-black text-center text-yellow-400 tracking-wider mb-8">📊 RESULTADOS EM TEMPO REAL</h2>
-      
-      <div id="ranking-barras" class="space-y-6">
+      <div id="lista-chapas-urna" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         </div>
 
-      <div class="mt-8 pt-6 border-t border-gray-700 flex justify-between items-center text-xl font-bold text-gray-400">
-        <span>TOTAL DE VOTOS:</span>
-        <span id="telao-total" class="text-3xl text-white">0</span>
+      <div id="area-confirmacao" class="hidden border-t-2 border-dashed pt-6 text-center">
+        <p class="text-xl text-gray-600 mb-4">Você escolheu: <span id="chapa-selecionada-nome" class="font-bold text-purple-700"></span></p>
+        <div class="flex gap-4">
+            <button onclick="idChapaSelecionada = null; renderizarTudo(); document.getElementById('area-confirmacao').classList.add('hidden')" class="flex-1 bg-gray-200 text-gray-700 font-bold py-4 rounded-xl shadow-md uppercase">Corrigir</button>
+            <button onclick="confirmarVoto()" id="btn-confirmar" class="flex-[2] bg-purple-700 hover:bg-purple-800 text-white font-bold py-4 rounded-xl text-xl shadow-lg transform active:scale-95 transition uppercase">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tela-sucesso" class="hidden w-full max-w-md bg-green-50 rounded-2xl shadow-xl p-12 text-center border-2 border-green-500">
+      <span class="text-6xl">✓</span>
+      <h2 class="text-3xl font-bold text-green-700 mt-4">VOTO CONFIRMADO!</h2>
+      <p class="text-gray-600 mt-2 text-lg">Obrigado por votar.</p>
+      <p class="text-xs text-gray-400 mt-6 italic">Aguarde a liberação do próximo aluno...</p>
+    </div>
+
+    <div id="tela-telao" class="hidden w-full max-w-5xl bg-gray-900 text-white rounded-2xl shadow-2xl p-10">
+      <h2 class="text-3xl font-black text-center text-yellow-400 tracking-wider mb-10 uppercase italic">Apuração em Tempo Real</h2>
+      <div id="ranking-barras" class="space-y-8"></div>
+      <div class="mt-10 pt-6 border-t border-gray-700 flex justify-between items-center text-2xl font-bold text-gray-400">
+        <span>Total de Votos:</span>
+        <span id="telao-total" class="text-4xl text-white">0</span>
       </div>
     </div>
 
     <div id="tela-admin" class="hidden w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
-      <h2 class="text-2xl font-bold text-red-700 mb-6 border-b pb-2">⚙️ Painel de Controle do Mesário</h2>
+      <h2 class="text-2xl font-bold text-red-700 mb-6 border-b pb-2">Painel do Administrador</h2>
       
-      <div class="mb-6">
-        <label class="block text-gray-700 font-bold mb-2">Nome da Eleição:</label>
+      <div class="mb-8 bg-gray-50 p-4 rounded-xl">
+        <label class="block text-gray-700 font-bold mb-2">Título da Eleição:</label>
         <div class="flex gap-2">
-          <input type="text" id="input-nome-eleicao" class="border p-2 rounded w-full">
-          <button onclick="salvarNomeEleicao()" class="bg-blue-600 text-white px-4 rounded font-bold">Salvar</button>
+          <input type="text" id="input-nome-eleicao" class="border p-3 rounded-lg w-full shadow-sm">
+          <button onclick="window.salvarNomeEleicao()" class="bg-blue-600 text-white px-6 rounded-lg font-bold">Atualizar</button>
         </div>
       </div>
 
       <div class="mb-6">
-        <h3 class="font-bold text-gray-800 mb-2">Chapas Cadastradas:</h3>
-        <div id="admin-lista-chapas" class="space-y-2 mb-4"></div>
+        <h3 class="font-bold text-gray-800 mb-4 text-lg">Gerenciar Chapas e Fotos:</h3>
+        <div id="admin-lista-chapas" class="grid grid-cols-1 gap-3 mb-6"></div>
         
-        <div class="bg-gray-50 p-4 rounded-xl border flex flex-col md:flex-row gap-2 items-end">
-          <div class="flex-grow">
-            <label class="block text-xs font-bold text-gray-600">Nome da Nova Chapa:</label>
-            <input type="text" id="nova-chapa-nome" class="w-full border p-2 rounded mt-1" placeholder="Ex: Chapa 1 - Voz Ativa">
+        <div class="bg-purple-50 p-6 rounded-2xl border-2 border-purple-200 space-y-4">
+          <h4 class="font-bold text-purple-800">Cadastrar Nova Chapa</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="text" id="nova-chapa-nome" class="border p-3 rounded-xl" placeholder="Nome da Chapa">
+            <input type="text" id="nova-chapa-foto" class="border p-3 rounded-xl" placeholder="Link da Foto do Presidente (ou Emoji)">
           </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-600">Emoji/Ícone da Foto:</label>
-            <input type="text" id="nova-chapa-foto" class="w-full border p-2 rounded mt-1 text-center" placeholder="Ex: 🔥">
-          </div>
-          <button onclick="adicionarChapa()" class="bg-purple-700 hover:bg-purple-800 text-white font-bold p-2 px-4 rounded w-full md:w-auto">Adicionar</button>
+          <p class="text-xs text-purple-600">Dica: Para fotos reais, hospede no GitHub ou use um link do Google Drive/Imgur.</p>
+          <button onclick="window.adicionarChapa()" class="w-full bg-purple-700 text-white font-bold py-3 rounded-xl shadow-lg">ADICIONAR CHAPA</button>
         </div>
       </div>
 
       <div class="border-t pt-6 flex flex-wrap gap-4 justify-between">
-        <button onclick="zerarVotos()" class="bg-red-600 hover:bg-red-700 text-white font-bold p-3 rounded-xl shadow">
-          ⚠️ Zerar Todos os Votos (Zerésima)
-        </button>
-        <button onclick="exportarDados()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold p-3 rounded-xl shadow">
-          📥 Exportar Relatório (Console)
-        </button>
+        <button onclick="window.zerarVotos()" class="bg-red-600 hover:bg-red-700 text-white font-bold p-3 px-6 rounded-xl shadow">LIMPAR TUDO (ZERÉSIMA)</button>
+        <button onclick="window.exportarDados()" class="bg-yellow-600 text-white font-bold p-3 px-6 rounded-xl shadow">RELATÓRIO CONSOLE</button>
       </div>
     </div>
 
   </main>
 
-  <footer class="bg-gray-800 p-3 text-center flex justify-center gap-4 text-xs">
-    <button onclick="mudarTela('urna')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-500">Urna (Alunos)</button>
-    <button onclick="mudarTela('telao')" class="bg-purple-600 text-white px-4 py-2 rounded font-bold hover:bg-purple-500">Telão (Projetor)</button>
-    <button onclick="mudarTela('admin')" class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-500">Admin (Mesário)</button>
+  <footer class="bg-gray-800 p-4 text-center flex justify-center gap-4 text-sm shadow-inner">
+    <button onclick="mudarTela('urna')" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow-lg">URNA</button>
+    <button onclick="mudarTela('telao')" class="bg-purple-600 text-white px-6 py-2 rounded-full font-bold shadow-lg">TELÃO</button>
+    <button onclick="mudarTela('admin')" class="bg-red-600 text-white px-6 py-2 rounded-full font-bold shadow-lg">ADMIN</button>
   </footer>
 
   <script type="module">
-    // Importando SDKs necessários do Firebase v12
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
 
-    // Suas credenciais oficiais enviadas
     const firebaseConfig = {
       apiKey: "AIzaSyCcCP0Uv3lnRR2Q28RQsc3vavrwKHiLsYU",
       authDomain: "votagremio.firebaseapp.com",
@@ -121,135 +117,127 @@
       measurementId: "G-NW16131Q12"
     };
 
-    // Inicializa o Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const eleicaoRef = ref(db, 'eleicao');
 
-    // Estado local da aplicação sincronizado com o servidor
-    let dadosEleicao = {
-      titulo: "ELEIÇÃO DO GRÊMIO ESTUDANTIL",
-      chapas: []
-    };
+    let dadosEleicao = { titulo: "", chapas: [] };
     let idChapaSelecionada = null;
 
-    // Chapas padrão que serão criadas caso o Banco esteja totalmente vazio na primeira execução
-    const chapasIniciaisPadrao = [
-      { id: 1, nome: "Chapa 1 - Conexão Estudantil", foto: "🚀", votos: 0 },
-      { id: 2, nome: "Chapa 2 - Voz Ativa", foto: "📢", votos: 0 },
-      { id: 3, nome: "Chapa 3 - Renovação Já", foto: "⚡", votos: 0 }
-    ];
-
-    // --- ESCUTAR ALTERAÇÕES NO FIREBASE EM TEMPO REAL ---
-    const eleicaoRef = ref(db, 'eleicao');
+    // Sincronização em tempo real
     onValue(eleicaoRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        dadosEleicao.titulo = data.titulo || "ELEIÇÃO DO GRÊMIO ESTUDANTIL";
-        dadosEleicao.chapas = data.chapas || [];
+        dadosEleicao = data;
         renderizarTudo();
-      } else {
-        // Se o Firebase estiver limpo/vazio, configura os dados iniciais padrão automaticamente
-        set(eleicaoRef, {
-          titulo: "ELEIÇÃO DO GRÊMIO ESTUDANTIL",
-          chapas: chapasIniciaisPadrao
-        });
       }
     });
 
-    // --- FUNÇÕES DE RENDERIZAÇÃO NA TELA ---
     function renderizarTudo() {
-      document.getElementById('header-titulo').innerText = dadosEleicao.titulo;
+      document.getElementById('header-titulo').innerText = dadosEleicao.titulo || "SISTEMA DE VOTAÇÃO";
       document.getElementById('input-nome-eleicao').value = dadosEleicao.titulo;
 
       const totalVotos = dadosEleicao.chapas.reduce((acc, c) => acc + (c.votos || 0), 0);
 
-      // 1. Renderizar a Urna (Alunos)
+      // Render Urna
       const listaUrna = document.getElementById('lista-chapas-urna');
       listaUrna.innerHTML = '';
-      if(dadosEleicao.chapas.length === 0) {
-        listaUrna.innerHTML = `<p class="text-center text-gray-500 col-span-full">Nenhuma chapa cadastrada.</p>`;
-      }
       dadosEleicao.chapas.forEach(chapa => {
+        const isUrl = chapa.foto.startsWith('http');
+        const imagemHtml = isUrl 
+          ? `<img src="${chapa.foto}" class="w-24 h-24 rounded-full object-cover shadow-md border-2 border-purple-200">`
+          : `<span class="text-5xl w-24 h-24 flex items-center justify-center bg-gray-100 rounded-full shadow-inner">${chapa.foto}</span>`;
+
         listaUrna.innerHTML += `
-          <button onclick="window.selecionarChapa(${chapa.id})" class="flex items-center gap-4 p-4 border-2 rounded-xl text-left transition hover:bg-green-50 active:scale-95 ${idChapaSelecionada === chapa.id ? 'border-green-600 bg-green-50 ring-2 ring-green-400' : 'border-gray-200'}">
-            <span class="text-4xl p-2 bg-gray-100 rounded-lg">${chapa.foto}</span>
-            <span class="text-lg font-bold text-gray-700">${chapa.nome}</span>
+          <button onclick="window.selecionarChapa(${chapa.id})" class="flex flex-col items-center gap-4 p-6 bg-white border-2 rounded-2xl transition-all shadow-sm hover:shadow-xl active:scale-95 ${idChapaSelecionada === chapa.id ? 'border-purple-600 ring-4 ring-purple-100 bg-purple-50' : 'border-gray-100'}">
+            ${imagemHtml}
+            <div class="text-center">
+                <span class="block text-xl font-black text-gray-800">${chapa.nome}</span>
+                <span class="text-xs text-purple-600 uppercase tracking-widest font-bold">Toque para selecionar</span>
+            </div>
           </button>
         `;
       });
 
-      // 2. Renderizar o Telão (Resultados)
+      // Render Telão
       const listaTelao = document.getElementById('ranking-barras');
       document.getElementById('telao-total').innerText = totalVotos;
       listaTelao.innerHTML = '';
+      const ordenadas = [...dadosEleicao.chapas].sort((a,b) => (b.votos || 0) - (a.votos || 0));
       
-      const chapasOrdenadas = [...dadosEleicao.chapas].sort((a,b) => (b.votos || 0) - (a.votos || 0));
-      chapasOrdenadas.forEach(chapa => {
+      ordenadas.forEach(chapa => {
         const porc = totalVotos > 0 ? Math.round(((chapa.votos || 0) / totalVotos) * 100) : 0;
+        const isUrl = chapa.foto.startsWith('http');
+        const miniFoto = isUrl 
+          ? `<img src="${chapa.foto}" class="w-10 h-10 rounded-full object-cover border border-gray-600">`
+          : `<span class="text-xl">${chapa.foto}</span>`;
+
         listaTelao.innerHTML += `
-          <div class="space-y-1">
-            <div class="flex justify-between font-medium text-lg">
-              <span class="flex items-center gap-2"><span>${chapa.foto}</span> <b>${chapa.nome}</b></span>
-              <span class="text-yellow-400 font-bold">${porc}% <span class="text-sm text-gray-400">(${chapa.votos || 0} votos)</span></span>
+          <div class="space-y-2">
+            <div class="flex justify-between items-end font-bold">
+              <div class="flex items-center gap-3">
+                ${miniFoto}
+                <span class="text-2xl">${chapa.nome}</span>
+              </div>
+              <span class="text-yellow-400 text-3xl">${porc}% <span class="text-sm text-gray-500">(${chapa.votos || 0} v)</span></span>
             </div>
-            <div class="w-full bg-gray-800 h-8 rounded-full overflow-hidden p-1 border border-gray-700">
+            <div class="w-full bg-gray-800 h-10 rounded-full p-1 shadow-inner border border-gray-700">
               <div class="bg-gradient-to-r from-green-500 via-lime-400 to-purple-600 h-full rounded-full bar-transition" style="width: ${porc}%"></div>
             </div>
           </div>
         `;
       });
 
-      // 3. Renderizar Painel Admin
+      // Render Admin
       const listaAdmin = document.getElementById('admin-lista-chapas');
       listaAdmin.innerHTML = '';
       dadosEleicao.chapas.forEach(chapa => {
         listaAdmin.innerHTML += `
-          <div class="flex justify-between items-center bg-gray-50 p-2 rounded border">
-            <span>${chapa.foto} <b>${chapa.nome}</b> (${chapa.votos || 0} votos)</span>
-            <button onclick="window.removerChapa(${chapa.id})" class="text-red-600 hover:text-red-800 font-bold text-sm">Remover</button>
+          <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-4">
+               ${chapa.foto.startsWith('http') ? `<img src="${chapa.foto}" class="w-10 h-10 rounded-full object-cover">` : `<span>${chapa.foto}</span>`}
+               <div>
+                  <b class="text-gray-800">${chapa.nome}</b>
+                  <p class="text-xs text-gray-500">Votos atuais: ${chapa.votos || 0}</p>
+               </div>
+            </div>
+            <button onclick="window.removerChapa(${chapa.id})" class="bg-red-50 text-red-600 p-2 px-4 rounded-lg font-bold text-xs hover:bg-red-100">Remover</button>
           </div>
         `;
       });
     }
 
-    // --- FUNÇÕES DA INTERFACE (Exportadas para a Janela Global) ---
+    // AÇÕES GLOBAIS
     window.selecionarChapa = function(id) {
       idChapaSelecionada = id;
       const chapa = dadosEleicao.chapas.find(c => c.id === id);
       document.getElementById('chapa-selecionada-nome').innerText = chapa.nome;
       document.getElementById('area-confirmacao').classList.remove('hidden');
       renderizarTudo();
+      window.scrollTo(0, document.body.scrollHeight);
     };
 
     window.confirmarVoto = function() {
       if (idChapaSelecionada === null) return;
       document.getElementById('btn-confirmar').disabled = true;
-
-      // Incrementa o voto diretamente no estado local das chapas
-      dadosEleicao.chapas = dadosEleicao.chapas.map(c => {
-        if(c.id === idChapaSelecionada) {
-          return { ...c, votos: (c.votos || 0) + 1 };
-        }
+      
+      const chapasNovas = dadosEleicao.chapas.map(c => {
+        if(c.id === idChapaSelecionada) return { ...c, votos: (c.votos || 0) + 1 };
         return c;
       });
 
-      // Envia a atualização em tempo real para o Firebase
-      set(eleicaoRef, dadosEleicao).then(() => {
+      set(eleicaoRef, { ...dadosEleicao, chapas: chapasNovas }).then(() => {
         document.getElementById('tela-votacao').classList.add('hidden');
         document.getElementById('tela-sucesso').classList.remove('hidden');
+        
+        // Som da Urna
+        const audio = new AudioContext();
+        const osc = audio.createOscillator();
+        osc.connect(audio.destination);
+        osc.frequency.value = 1200;
+        osc.start();
+        setTimeout(() => osc.stop(), 300);
 
-        // Som de confirmação (Beep da Urna)
-        try {
-          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          const oscillator = audioCtx.createOscillator();
-          oscillator.type = 'sine';
-          oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime);
-          oscillator.connect(audioCtx.destination);
-          oscillator.start();
-          setTimeout(() => oscillator.stop(), 300);
-        } catch(e) {}
-
-        // Volta para a tela inicial de votação após 3 segundos
         setTimeout(() => {
           idChapaSelecionada = null;
           document.getElementById('area-confirmacao').classList.add('hidden');
@@ -259,60 +247,44 @@
       });
     };
 
-    window.salvarNomeEleicao = function() {
-      dadosEleicao.titulo = document.getElementById('input-nome-eleicao').value;
-      set(eleicaoRef, dadosEleicao);
-    };
-
     window.adicionarChapa = function() {
       const nome = document.getElementById('nova-chapa-nome').value;
-      const foto = document.getElementById('nova-chapa-foto').value || "📦";
-      if (!nome) return alert("Digite o nome da chapa!");
-
-      const novoId = dadosEleicao.chapas.length > 0 ? Math.max(...dadosEleicao.chapas.map(c => c.id)) + 1 : 1;
-      dadosEleicao.chapas.push({ id: novoId, nome: nome, foto: foto, votos: 0 });
+      const foto = document.getElementById('nova-chapa-foto').value || "🔰";
+      if (!nome) return alert("Preencha o nome!");
       
+      const novoId = Date.now(); // ID Único
+      dadosEleicao.chapas.push({ id: novoId, nome: nome, foto: foto, votos: 0 });
+      set(eleicaoRef, dadosEleicao);
       document.getElementById('nova-chapa-nome').value = '';
       document.getElementById('nova-chapa-foto').value = '';
-      set(eleicaoRef, dadosEleicao);
     };
 
     window.removerChapa = function(id) {
-      if(confirm("Tem certeza que quer remover esta chapa?")) {
+      if(confirm("Deseja remover esta chapa?")) {
         dadosEleicao.chapas = dadosEleicao.chapas.filter(c => c.id !== id);
         set(eleicaoRef, dadosEleicao);
       }
     };
 
-    window.zerarVotos = function() {
-      if(confirm("ATENÇÃO: Isto irá limpar permanentemente todos os votos da nuvem! Continuar?")) {
-        dadosEleicao.chapas = dadosEleicao.chapas.map(c => ({ ...c, votos: 0 }));
-        set(eleicaoRef, dadosEleicao).then(() => {
-          alert("Urna zerada com sucesso!");
-        });
-      }
+    window.salvarNomeEleicao = function() {
+      dadosEleicao.titulo = document.getElementById('input-nome-eleicao').value;
+      set(eleicaoRef, dadosEleicao);
     };
 
-    window.exportarDados = function() {
-      console.log("--- RELATÓRIO OFICIAL DO FIREBASE ---");
-      console.table(dadosEleicao.chapas);
-      alert("Tabela exportada no Console (F12).");
+    window.zerarVotos = function() {
+      if(confirm("LIMPAR TUDO? Isso não pode ser desfeito.")) {
+        dadosEleicao.chapas = dadosEleicao.chapas.map(c => ({ ...c, votos: 0 }));
+        set(eleicaoRef, dadosEleicao);
+      }
     };
   </script>
 
   <script>
-    // Gerenciador Simples de Troca de Telas (Navegação local)
     function mudarTela(tela) {
-      document.getElementById('tela-votacao').classList.add('hidden');
-      document.getElementById('tela-sucesso').classList.add('hidden');
-      document.getElementById('tela-telao').classList.add('hidden');
-      document.getElementById('tela-admin').classList.add('hidden');
-
-      if (tela === 'urna') document.getElementById('tela-votacao').classList.remove('hidden');
-      if (tela === 'telao') document.getElementById('tela-telao').classList.remove('hidden');
-      if (tela === 'admin') document.getElementById('tela-admin').classList.remove('hidden');
+      document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
+      document.getElementById('tela-' + tela).classList.remove('hidden');
     }
   </script>
 </body>
-          </html>
-          
+  </html>
+  
